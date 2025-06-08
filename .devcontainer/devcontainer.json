@@ -1,27 +1,19 @@
 // .devcontainer/devcontainer.json
 {
   // Name of the dev container
-  "name": "Docker Enabled Dev Container",
+  "name": "Docker Enabled Dev Container (Revised)",
 
-  // Use a pre-built Universal image, which includes many common tools
-  // and has Docker pre-installed via the 'docker-in-docker' feature.
+  // Use the pre-built Universal image, which typically includes
+  // Docker (via docker-in-docker) and many common tools.
   "image": "mcr.microsoft.com/devcontainers/universal:latest",
 
-  // Or you can specify a specific version:
-  // "image": "mcr.microsoft.com/devcontainers/universal:2",
-
-  // Features to add to the container.
-  // The 'docker-in-docker' feature is crucial for running Docker commands within Codespaces.
-  "features": {
-    "ghcr.io/devcontainers/features/docker:1": {
-      "version": "latest",
-      "enableNonRootDocker": "true" // Allows non-root users to run Docker commands
-    }
-  },
+  // No explicit "features" section for Docker is needed,
+  // as the 'universal' image usually handles this.
 
   // Use 'postCreateCommand' to run commands once the container is created.
   // This example simply checks the Docker version to confirm it's working.
-  "postCreateCommand": "echo 'Docker is ready!' && docker --version",
+  // The 'enableNonRootDocker' property is often handled by the Universal image's setup.
+  "postCreateCommand": "echo 'Docker is ready!' && docker --version && echo 'User is: $(whoami)' && groups",
 
   // Use 'customizations' to extend the default VS Code settings.
   "customizations": {
@@ -39,8 +31,6 @@
   },
 
   // Port forwarding for your applications.
-  // Codespaces automatically detects common ports, but explicitly listing them
-  // can be helpful.
   "forwardPorts": [5000, 3000],
 
   // Set the default workspace folder.

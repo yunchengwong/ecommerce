@@ -1,3 +1,4 @@
+# frontend/Dockerfile
 # Dockerfile for Flask Frontend
 FROM python:3.9-slim-buster
 
@@ -12,7 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Flask application files
 COPY app.py .
-COPY templates/ templates/ # Copy the templates folder
+# Copy the templates folder (removed comment from same line)
+COPY templates/ templates/
 
 # Expose the port Flask runs on
 EXPOSE 5000
