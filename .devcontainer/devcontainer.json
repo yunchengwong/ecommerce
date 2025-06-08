@@ -1,0 +1,48 @@
+// .devcontainer/devcontainer.json
+{
+  // Name of the dev container
+  "name": "Docker Enabled Dev Container",
+
+  // Use a pre-built Universal image, which includes many common tools
+  // and has Docker pre-installed via the 'docker-in-docker' feature.
+  "image": "mcr.microsoft.com/devcontainers/universal:latest",
+
+  // Or you can specify a specific version:
+  // "image": "mcr.microsoft.com/devcontainers/universal:2",
+
+  // Features to add to the container.
+  // The 'docker-in-docker' feature is crucial for running Docker commands within Codespaces.
+  "features": {
+    "ghcr.io/devcontainers/features/docker:1": {
+      "version": "latest",
+      "enableNonRootDocker": "true" // Allows non-root users to run Docker commands
+    }
+  },
+
+  // Use 'postCreateCommand' to run commands once the container is created.
+  // This example simply checks the Docker version to confirm it's working.
+  "postCreateCommand": "echo 'Docker is ready!' && docker --version",
+
+  // Use 'customizations' to extend the default VS Code settings.
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash", // Use bash as default terminal shell
+        "editor.wordWrap": "on"
+      },
+      "extensions": [
+        "ms-azuretools.vscode-docker", // VS Code Docker extension
+        "ms-python.python",            // Python extension (useful for your Flask app)
+        "dbaeumer.vscode-eslint"       // ESLint (useful for your Node.js app)
+      ]
+    }
+  },
+
+  // Port forwarding for your applications.
+  // Codespaces automatically detects common ports, but explicitly listing them
+  // can be helpful.
+  "forwardPorts": [5000, 3000],
+
+  // Set the default workspace folder.
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+}

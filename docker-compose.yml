@@ -1,0 +1,34 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Flask Frontend Service
+  frontend:
+    build:
+      context: ./frontend # Assumes app.py, requirements.txt, and templates folder are in a 'frontend' directory
+      dockerfile: Dockerfile
+    container_name: flask_frontend
+    ports:
+      - "5000:5000" # Map host port 5000 to container port 5000
+    environment:
+      # Pass the backend URL to the frontend.
+      # 'backend' is the service name of the Node.js app in this docker-compose file.
+      BACKEND_URL: http://backend:3000
+    networks:
+      - app_network # Connect to the custom network
+
+  # Node.js Express Backend Service
+  backend:
+    build:
+      context: ./backend # Assumes index.js and package.json are in a 'backend' directory
+      dockerfile: Dockerfile
+    container_name: express_backend
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000
+    networks:
+      - app_network # Connect to the custom network
+
+# Define a custom network for inter-service communication
+networks:
+  app_network:
+    driver: bridge
