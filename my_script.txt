@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Update package lists
+echo "Updating apt package lists..."
+sudo apt update -y
+
+# Install Docker
+echo "Installing Docker..."
+sudo apt install docker.io -y
+
+# Start and enable Docker service to run on boot
+echo "Starting and enabling Docker service..."
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add the 'ubuntu' user to the 'docker' group
+# This allows the 'ubuntu' user to run docker commands without 'sudo'
+echo "Adding ubuntu user to the docker group..."
+sudo usermod -aG docker ubuntu
+
+# Note: For the 'ubuntu' user to fully inherit the new group
+# a logout/login (or re-SSH) is typically required for interactive sessions.
+# However, this script continues to run as root, so subsequent docker commands
+# within this script will work.
+
+# Create directory for Docker Compose CLI plugin
+echo "Creating Docker Compose plugin directory..."
+mkdir -p /home/ubuntu/.docker/cli-plugins
+
+# Download Docker Compose V2
+echo "Downloading Docker Compose V2..."
+# Using /home/ubuntu for the target path to ensure it's accessible by the 'ubuntu' user
+curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /home/ubuntu/.docker/cli-plugins/docker-compose
+
+# Make Docker Compose executable
+echo "Making Docker Compose executable..."
+chmod +x /home/ubuntu/.docker/cli-plugins/docker-compose
+
+# Optionally, verify Docker and Docker Compose versions (will appear in cloud-init logs)
+echo "Verifying Docker version..."
+docker --version
+echo "Verifying Docker Compose version..."
+/home/ubuntu/.docker/cli-plugins/docker-compose version

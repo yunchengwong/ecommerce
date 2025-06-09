@@ -25,6 +25,13 @@ services:
     container_name: express_backend
     ports:
       - "3000:3000" # Map host port 3000 to container port 3000
+    environment:
+      # These variables are read from the .env file in the same directory as this docker-compose.yml
+      DB_USER: ${DB_USER}
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
     networks:
       - app_network # Connect to the custom network
 

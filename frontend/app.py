@@ -17,8 +17,8 @@ def index():
     """
     return render_template('index.html')
 
-@app.route('/get_data', methods=['GET'])
-def get_data_from_backend():
+@app.route('/get_products', methods=['GET'])
+def get_products_from_backend():
     """
     Endpoint to fetch data from the Node.js Express backend.
     Makes an HTTP GET request to the backend service.
@@ -26,7 +26,7 @@ def get_data_from_backend():
     try:
         # Make a request to the backend service using its Docker service name
         # The backend service is named 'backend' in docker-compose.yml
-        response = requests.get(f"{BACKEND_URL}/api/data")
+        response = requests.get(f"{BACKEND_URL}/api/products")
         response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
         data = response.json()
         return jsonify(data)
