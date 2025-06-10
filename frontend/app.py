@@ -9,13 +9,14 @@ app = Flask(__name__)
 # which will be set by Docker Compose.
 # The 'backend' hostname will resolve to the backend service's IP within the Docker network.
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:3000')
+INSTANCE_ID = os.getenv('INSTANCE_ID', 'N/A')
 
 @app.route('/')
 def index():
     """
     Renders the main index page.
     """
-    return render_template('index.html')
+    return render_template('index.html', instance_id=INSTANCE_ID)
 
 @app.route('/get_products', methods=['GET'])
 def get_products_from_backend():

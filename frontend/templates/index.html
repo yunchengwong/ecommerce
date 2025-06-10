@@ -76,15 +76,24 @@
             color: #dc3545;
             font-weight: bold;
         }
+        .instance-id-display {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #777;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Our Products</h1>
+        <div class="instance-id-display">
+            Instance ID: **{{ instance_id }}**
+        </div>
         <div id="loading" class="loading-message">Loading products...</div>
         <div id="error" class="error-message" style="display: none;"></div>
         <div id="products-container" class="product-grid">
-            </div>
+        </div>
     </div>
 
     <script>

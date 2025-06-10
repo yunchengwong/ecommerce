@@ -14,6 +14,7 @@ services:
       # Pass the backend URL to the frontend.
       # 'backend' is the service name of the Node.js app in this docker-compose file.
       BACKEND_URL: http://backend:3000
+      INSTANCE_ID: ${INSTANCE_ID}
     networks:
       - app_network # Connect to the custom network
 
