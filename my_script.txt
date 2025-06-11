@@ -47,8 +47,8 @@ echo "Installing Git..."
 sudo apt install git -y
 
 # Install MySQL Client
-echo "Installing MySQL client..."
-sudo apt install mysql-client -y
+# echo "Installing MySQL client..."
+# sudo apt install mysql-client -y
 
 iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 5000
 
@@ -59,10 +59,10 @@ TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-meta
 export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id -H "X-aws-ec2-metadata-token: $TOKEN")
 
 # Set environment variables for the application
-export DB_USER=your_mysql_master_username
-export DB_HOST=your_rds_mysql_endpoint.rds.amazonaws.com
-export DB_NAME=your_database_name
-export DB_PASSWORD=your_mysql_master_password
+export DB_USER=admin
+export DB_HOST=endpoint
+export DB_NAME=products
+export DB_PASSWORD=password
 export DB_PORT=3306
 
 # Clone the application repository and start Docker Compose

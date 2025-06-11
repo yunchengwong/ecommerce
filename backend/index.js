@@ -54,19 +54,19 @@ async function initializeDatabase() {
           name: 'Nike P-6000 SE',
           description: 'A mash-up of past Pegasus sneakers, the P-6000 takes early-2000s running to modern heights. It mixes leather, textile and suede for a layered look built to last. Plus, its foam cushioning adds a lifted, athletics inspired stance and unbelievable comfort. This version is part of the Bowerman series—a collection honouring the legacy of Coach Bill Bowerman.',
           price: 339,
-          imageUrl: 'https://ecommerce.s3.us-east-1.amazonaws.com/products/20250609161243.jpg'
+          imageUrl: 'https://ecommerce-7016.s3.us-east-1.amazonaws.com/products/20250609161243.jpg'
         },
         {
           name: 'Air Jordan 4 RM',
           description: 'These sneakers reimagine the instantly recognisable AJ4 for life on the go. We centred comfort and durability while keeping the heritage look you love. Max Air in the heel cushions your every step, and elements of the upper—the wing, eyestay and heel—are blended into a strong, flexible cage that wraps the shoe to add a toughness to your everyday commute.',
           price: 419,
-          imageUrl: 'https://ecommerce.s3.us-east-1.amazonaws.com/products/20250609161328.jpg'
+          imageUrl: 'https://ecommerce-7016.s3.us-east-1.amazonaws.com/products/20250609161328.jpg'
         },
         {
           name: 'Air Jordan Legacy 312 Low',
           description: 'Celebrate MJ\'s legacy with this shout-out to Chicago\'s 312 area code. With elements from three iconic Jordans (the AJ3, AJ1 and Air Alpha Force), it\'s a modern mash-up that reps the best.',
           price: 399,
-          imageUrl: 'https://ecommerce.s3.us-east-1.amazonaws.com/products/20250609161344.jpg'
+          imageUrl: 'https://ecommerce-7016.s3.us-east-1.amazonaws.com/products/20250609161344.jpg'
         }
       ];
 
