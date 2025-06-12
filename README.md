@@ -41,8 +41,6 @@ PRIVATE_3A=$(aws ec2 describe-subnets \
 PRIVATE_4B=$(aws ec2 describe-subnets \
     --filters "Name=tag:Name,Values=project-subnet-private4-us-east-1b" \
     --query "Subnets[0].SubnetId" --output text)
-
-echo $PRIVATE_1A $PRIVATE_2B $PRIVATE_3A $PRIVATE_4B
 ```
 
 #### 1.2 security groups
