@@ -1,48 +1,39 @@
 // backend/index.js
 const express = require('express');
-const cors = require('cors'); // Import cors middleware
-const mysql = require('mysql2/promise'); // Import mysql2 with promise support
+const cors = require('cors');
+const mysql = require('mysql2/promise');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Enable CORS for all origins, allowing the frontend to access it.
-// In a production environment, you would restrict this to specific origins.
 app.use(cors());
-app.use(express.json()); // For parsing application/json
+app.use(express.json());
 
-// Configure MySQL connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT, // Default MySQL port is 3306
+  port: process.env.DB_PORT,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
-/**
- * Initializes the database by creating the 'products' table if it doesn't exist,
- * and populating it with initial product data.
- * This function is designed to be idempotent, meaning it can be run multiple
- * times without causing errors or duplicate data if the primary key exists.
- */
 async function initializeDatabase() {
   console.log('Attempting to initialize database...');
   try {
-    const connection = await pool.getConnection(); // Get a connection from the pool
+    const connection = await pool.getConnection();
     try {
       // 1. Create products table if it doesn't exist
       console.log('Creating products table if not exists...');
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS products (
-            product_name VARCHAR(255) NOT NULL,
+            product_id INT PRIMARY KEY AUTO_INCREMENT,
+            product_name VARCHAR(255) NOT NULL UNIQUE,
             description TEXT,
             price DECIMAL(10, 2) NOT NULL,
-            image_url VARCHAR(255),
-            PRIMARY KEY (product_name)
+            image_url VARCHAR(255)
         );
       `);
       console.log('Products table checked/created.');
@@ -83,7 +74,7 @@ async function initializeDatabase() {
       }
       console.log('Initial product data population complete.');
     } finally {
-      connection.release(); // Always release the connection back to the pool
+      connection.release();
     }
   } catch (error) {
     console.error('Error during database initialization:', error.stack);
@@ -92,20 +83,17 @@ async function initializeDatabase() {
   }
 }
 
-// Test database connection
 pool.getConnection()
-  .then(async connection => { // Mark this as async because we will call initializeDatabase
+  .then(async connection => {
     console.log('Connected to AWS RDS MySQL database!');
-    connection.release(); // Release the connection back to the pool
-    await initializeDatabase(); // Call the database initialization function
+    connection.release();
+    await initializeDatabase();
   })
   .catch(err => {
     console.error('Error connecting to the database on startup:', err.stack);
-    // It's crucial to exit if the database connection fails on startup
     process.exit(1);
   });
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.send('Hello from Node.js Express Backend!');
 });
@@ -121,7 +109,7 @@ app.get('/api/products', async (req, res) => {
       timestamp: new Date().toISOString(),
       source: 'AWS RDS MySQL',
       version: '1.0',
-      products: rows // The fetched products
+      products: rows
     };
     console.log(`[Backend] Products requested from frontend. Sending: ${JSON.stringify(data)}`);
     res.json(data);
@@ -131,7 +119,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Node.js Express Backend listening at http://localhost:${port}`);
   console.log(`Accessible within Docker network at http://backend:${port}`);
