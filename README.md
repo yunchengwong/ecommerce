@@ -18,6 +18,10 @@
     - `project-subnet-public2-us-east-1b`: Enable auto-assign public IPv4 address
 
 ```
+VPC_ID=$(aws ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=project-vpc" \
+    --query "Vpcs[0].VpcId" --output text)
+
 PUBLIC_1A=$(aws ec2 describe-subnets \
     --filters "Name=tag:Name,Values=project-subnet-public1-us-east-1a" \
     --query "Subnets[0].SubnetId" --output text)
