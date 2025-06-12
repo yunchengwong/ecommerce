@@ -46,24 +46,16 @@ PRIVATE_4B=$(aws ec2 describe-subnets \
 #### 1.2 security groups
 
 ```
-# Create Security Group for ALB
 ALB_SG_ID=$(aws ec2 create-security-group --group-name group-alb --vpc-id "$VPC_ID" --description "security group for ALB" --query GroupId --output text)
 
-# Allow HTTPS (port 443) from Anywhere to ALB
 aws ec2 authorize-security-group-ingress --group-id "$ALB_SG_ID" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
-# Create Security Group for EC2
 EC2_SG_ID=$(aws ec2 create-security-group --group-name group-ec2 --vpc-id $VPC_ID --description "security group for EC2" --query GroupId --output text)
 
-# Allow HTTP (port 80) from ALB Security Group to EC2
 aws ec2 authorize-security-group-ingress --group-id "$EC2_SG_ID" --protocol tcp --port 80 --source-group "$ALB_SG_ID"
 
-# aws ec2 authorize-security-group-ingress --group-id "$EC2_SG_ID" --protocol tcp --port 22 --cidr 0.0.0.0/0
-
-# Create Security Group for RDS
 RDS_SG_ID=$(aws ec2 create-security-group --group-name group-rds --vpc-id $VPC_ID --description "security group for RDS" --query GroupId --output text)
 
-# Allow MySQL (port 3306) from EC2 Security Group to RDS
 aws ec2 authorize-security-group-ingress --group-id "$RDS_SG_ID" --protocol tcp --port 3306 --source-group "$EC2_SG_ID"
 ```
 
