@@ -6,85 +6,43 @@
 
 #### 1.1 VPC with public and private subnets
 
-Option 1: Create VPC in Console:
-
 - Create VPC
     - Resources to create: VPC and more
     - Number of availability zones (AZs): 2
     - Number of public subnets: 2
     - Number of private subnets: 4
-    - NAT gatways: None
+    - NAT gateways: 1
     - VPC endpoints: None
 - Edit Subnet
     - `project-subnet-public1-us-east-1a`: Enable auto-assign public IPv4 address
     - `project-subnet-public2-us-east-1b`: Enable auto-assign public IPv4 address
 
-OR
-
-Option 2: Create VPC using CLI:
-
 ```
-# Create VPC
-VPC_ID=$(aws ec2 create-vpc --cidr-block "10.0.0.0/16" --tag-specifications '{"resourceType":"vpc","tags":[{"key":"Name","value":"project-vpc"}]}' --query 'Vpc.VpcId' --output text)
+PUBLIC_1A=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-public1-us-east-1a" \
+    --query "Subnets[0].SubnetId" --output text)
 
-# Create Public Subnet 1 for ALB (us-east-1a)
-PUBLIC_1A=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.0.0/20" --availability-zone "us-east-1a" --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-public1-us-east-1a"}]}' --query 'Subnet.SubnetId' --output text)
+PUBLIC_2B=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-public2-us-east-1b" \
+    --query "Subnets[0].SubnetId" --output text)
 
-aws ec2 modify-subnet-attribute --subnet-id "$PUBLIC_1A" --map-public-ip-on-launch
+PRIVATE_1A=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-private1-us-east-1a" \
+    --query "Subnets[0].SubnetId" --output text)
 
-# Create Public Subnet 2 for ALB (us-east-1b)
-PUBLIC_2B=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.16.0/20" --availability-zone "us-east-1b" --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-public2-us-east-1b"}]}' --query 'Subnet.SubnetId' --output text) 
+PRIVATE_2B=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-private2-us-east-1b" \
+    --query "Subnets[0].SubnetId" --output text)
 
-aws ec2 modify-subnet-attribute --subnet-id "$PUBLIC_2B" --map-public-ip-on-launch
+PRIVATE_3A=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-private3-us-east-1a" \
+    --query "Subnets[0].SubnetId" --output text)
 
-# Create Private Subnet 1 for EC2 (us-east-1a)
-PRIVATE_1A=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.128.0/20" --availability-zone "us-east-1a" --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-private1-us-east-1a"}]}' --query 'Subnet.SubnetId' --output text)
+PRIVATE_4B=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=project-subnet-private4-us-east-1b" \
+    --query "Subnets[0].SubnetId" --output text)
 
-# Create Private Subnet 2 for EC2 (us-east-1b)
-PRIVATE_2B=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.144.0/20" --availability-zone "us-east-1b"  --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-private2-us-east-1b"}]}' --query 'Subnet.SubnetId' --output text)
-
-# Create Private Subnet 3 for RDS (us-east-1a)
-PRIVATE_3A=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.160.0/20" --availability-zone "us-east-1a" --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-private3-us-east-1a"}]}' --query 'Subnet.SubnetId' --output text)
-
-# Create Private Subnet 4 for RDS (us-east-1b)
-PRIVATE_4B=$(aws ec2 create-subnet --vpc-id "$VPC_ID" --cidr-block "10.0.176.0/20" --availability-zone "us-east-1b" --tag-specifications '{"resourceType":"subnet","tags":[{"key":"Name","value":"project-subnet-private4-us-east-1b"}]}' --query 'Subnet.SubnetId' --output text)
-
-# Create Internet Gateway
-IGW_ID=$(aws ec2 create-internet-gateway --tag-specifications '{"resourceType":"internet-gateway","tags":[{"key":"Name","value":"project-igw"}]}' --query 'InternetGateway.InternetGatewayId' --output text)
-
-# Attach Internet Gateway to VPC
-aws ec2 attach-internet-gateway --internet-gateway-id "$IGW_ID" --vpc-id "$VPC_ID"
-
-# Create Route Table for Public Subnets
-ROUTE_TABLE_PUBLIC=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --tag-specifications '{"resourceType":"route-table","tags":[{"key":"Name","value":"project-rtb-public"}]}' --query 'RouteTable.RouteTableId' --output text)
-
-# Create Route for Public Subnets
-aws ec2 create-route --route-table-id "$ROUTE_TABLE_PUBLIC" --destination-cidr-block "0.0.0.0/0" --gateway-id "$IGW_ID" 
-
-# Associate Route Table with Public Subnets
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PUBLIC" --subnet-id "$PUBLIC_1A"
-
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PUBLIC" --subnet-id "$PUBLIC_2B"
-
-# Create Route Table for Private Subnet 1 (us-east-1a)
-ROUTE_TABLE_PRIVATE_1=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --tag-specifications '{"resourceType":"route-table","tags":[{"key":"Name","value":"project-rtb-private1-us-east-1a"}]}' --query 'RouteTable.RouteTableId' --output text)
-
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PRIVATE_1" --subnet-id "$PRIVATE_1A"
-
-# Create Route Table for Private Subnet 2 (us-east-1b)
-ROUTE_TABLE_PRIVATE_2=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --tag-specifications '{"resourceType":"route-table","tags":[{"key":"Name","value":"project-rtb-private2-us-east-1b"}]}' --query 'RouteTable.RouteTableId' --output text)
-
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PRIVATE_2" --subnet-id "$PRIVATE_2B"
-
-# Create Route Table for Private Subnet 3 (us-east-1a)
-ROUTE_TABLE_PRIVATE_3=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --tag-specifications '{"resourceType":"route-table","tags":[{"key":"Name","value":"project-rtb-private3-us-east-1a"}]}' --query 'RouteTable.RouteTableId' --output text)
-
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PRIVATE_3" --subnet-id "$PRIVATE_3A"
-
-# Create Route Table for Private Subnet 4 (us-east-1b)
-ROUTE_TABLE_PRIVATE_4=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --tag-specifications '{"resourceType":"route-table","tags":[{"key":"Name","value":"project-rtb-private4-us-east-1b"}]}' --query 'RouteTable.RouteTableId' --output text)
-
-aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PRIVATE_4" --subnet-id "$PRIVATE_4B"
+echo $PRIVATE_1A $PRIVATE_2B $PRIVATE_3A $PRIVATE_4B
 ```
 
 #### 1.2 security groups
