@@ -198,7 +198,7 @@ aws autoscaling create-auto-scaling-group \
     --launch-template LaunchTemplateId="$LAUNCH_TEMPLATE_ID",Version='$Latest' \
     --target-group-arns "$TG_ARN" \
     --health-check-type ELB --health-check-grace-period 600 \
-    --min-size 1 --max-size 2 \
+    --min-size 2 --max-size 4 \
     --vpc-zone-identifier "$PRIVATE_1A,$PRIVATE_2B" \
     --region us-east-1
 
