@@ -91,19 +91,21 @@ aws ec2 associate-route-table --route-table-id "$ROUTE_TABLE_PRIVATE_4" --subnet
 
 ```
 # Create Security Group for ALB
-ALB_SG_ID=$(aws ec2 create-security-group --group-name sg-alb --vpc-id "$VPC_ID" --query GroupId --output text)
+ALB_SG_ID=$(aws ec2 create-security-group --group-name group-alb --vpc-id "$VPC_ID" --description "security group for ALB" --query GroupId --output text)
 
 # Allow HTTPS (port 443) from Anywhere to ALB
 aws ec2 authorize-security-group-ingress --group-id "$ALB_SG_ID" --protocol tcp --port 443 --cidr 0.0.0.0/0
 
 # Create Security Group for EC2
-EC2_SG_ID=$(aws ec2 create-security-group --group-name sg-ec2 --vpc-id $VPC_ID --query GroupId --output text)
+EC2_SG_ID=$(aws ec2 create-security-group --group-name group-ec2 --vpc-id $VPC_ID --description "security group for EC2" --query GroupId --output text)
 
 # Allow HTTP (port 80) from ALB Security Group to EC2
 aws ec2 authorize-security-group-ingress --group-id "$EC2_SG_ID" --protocol tcp --port 80 --source-group "$ALB_SG_ID"
 
+# aws ec2 authorize-security-group-ingress --group-id "$EC2_SG_ID" --protocol tcp --port 22 --cidr 0.0.0.0/0
+
 # Create Security Group for RDS
-RDS_SG_ID=$(aws ec2 create-security-group --group-name sg-rds --vpc-id $VPC_ID --query GroupId --output text)
+RDS_SG_ID=$(aws ec2 create-security-group --group-name group-rds --vpc-id $VPC_ID --description "security group for RDS" --query GroupId --output text)
 
 # Allow MySQL (port 3306) from EC2 Security Group to RDS
 aws ec2 authorize-security-group-ingress --group-id "$RDS_SG_ID" --protocol tcp --port 3306 --source-group "$EC2_SG_ID"
@@ -120,14 +122,14 @@ aws ec2 authorize-security-group-ingress --group-id "$RDS_SG_ID" --protocol tcp 
 #### 3.1 S3 storing products images
 
 ```
-aws s3api create-bucket --bucket ecommerce-7016 --region us-east-1
+aws s3api create-bucket --bucket ecommerce-156422111001 --region us-east-1
 
 git clone https://github.com/yunchengwong/ecommerce.git
 
-aws s3 sync ecommerce/products s3://ecommerce-7016/products
+aws s3 sync ecommerce/products s3://ecommerce-156422111001/products
 
 aws s3api put-public-access-block \
-    --bucket ecommerce-7016 \
+    --bucket ecommerce-156422111001 \
     --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
 
 cat <<EOF > bucket-policy.json
@@ -139,13 +141,13 @@ cat <<EOF > bucket-policy.json
             "Effect": "Allow",
             "Principal": "*",
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::ecommerce-7016/products/*"
+            "Resource": "arn:aws:s3:::ecommerce-156422111001/products/*"
         }
     ]
 }
 EOF
 
-aws s3api put-bucket-policy --bucket ecommerce-7016 --policy file://bucket-policy.json
+aws s3api put-bucket-policy --bucket ecommerce-156422111001 --policy file://bucket-policy.json
 ```
 
 #### 3.2 RDS storing product listings
@@ -159,7 +161,8 @@ aws s3api put-bucket-policy --bucket ecommerce-7016 --policy file://bucket-polic
 ```
 aws rds create-db-subnet-group \
     --db-subnet-group-name mysubnetgroup \
-    --subnet-ids $PRIVATE_3A $PRIVATE_4B
+    --db-subnet-group-description "test DB subnet group" \
+    --subnet-ids $PRIVATE_3A $PRIVATE_4B 
 
 aws rds create-db-instance \
     --engine mysql \
@@ -171,18 +174,17 @@ aws rds create-db-instance \
     --db-instance-class db.t4g.micro \
     --storage-type gp2 \
     --allocated-storage 20 \
-    --no-enable-storage-autoscaling \
     --db-subnet-group-name mysubnetgroup \
     --no-publicly-accessible \
     --vpc-security-group-ids "$RDS_SG_ID" \
     --db-name products \
     --no-storage-encrypted
 
+# WAIT FOR 5 MINUTES
+
 ENDPOINT=$(aws rds describe-db-instances \
     --db-instance-identifier database-1 \
     --query 'DBInstances[0].Endpoint.Address' --output text)
-
-sed -i 's/password/YourStrongPassword123!/g' my-script.txt
 
 sed -i "s/endpoint/$ENDPOINT/g" my-script.txt
 ```
@@ -198,23 +200,24 @@ TG_ARN=$(aws elbv2 create-target-group \
     --port 80 \
     --target-type instance \
     --vpc-id "$VPC_ID" \
-    --query TargetGroupArn --output text)
+    --query 'TargetGroups[0].TargetGroupArn' --output text)
 
 ALB_ARN=$(aws elbv2 create-load-balancer \
     --name my-load-balancer \
     --subnets $PUBLIC_1A $PUBLIC_2B \
     --security-groups $ALB_SG_ID \
-    --query LoadBalancerArn --output text)
+    --query 'LoadBalancers[0].LoadBalancerArn' --output text)
 
-openssl genrsa -out my-alb-private-key.pem 2048
+openssl req -x509 -newkey rsa:2048 -keyout demo.key -out demo.crt -days 365 -nodes \
+  -subj "/CN=example.com"
 
-openssl req -new -x509 -nodes -days 365 -key my-alb-private-key.pem -out my-alb-certificate.pem -subj "/C=US/ST=State/L=City/O=MySchoolProject/OU=IT/CN=*.elb.amazonaws.com"
+cat demo.crt demo.key > demo-combined.pem
 
-CERT_ARN=$(aws acm import-certificate \
-    --certificate file://my-alb-certificate.pem \
-    --private-key file://my-alb-private-key.pem \
-    --region us-east-1 \
-    --query CertificateArn --output text)
+aws acm import-certificate \
+  --certificate fileb://demo.crt \
+  --private-key fileb://demo.key \
+  --certificate-chain fileb://demo.crt \
+  --region us-east-1 
 
 aws elbv2 create-listener \
     --load-balancer-arn "$ALB_ARN" \
@@ -228,27 +231,40 @@ aws elbv2 create-listener \
 #### 4.2 auto scaling group
 
 ```
+mv ecommerce/my_script.txt .
+
+USER_DATA_B64=$(base64 -w 0 my_script.txt)
+
 LAUNCH_TEMPLATE_ID=$(aws ec2 create-launch-template \
     --launch-template-name TemplateForAutoScaling \
-    --launch-template-data '{"NetworkInterfaces": [{"Groups": ["$EC2_SG_ID"]}], "ImageId": "ami-09eb231ad55c3963d", "InstanceType": "t2.micro", "UserData": "file://my_script.txt"}' \
+    --launch-template-data '{"NetworkInterfaces": [{"DeviceIndex": 0, "Groups": ["'"$EC2_SG_ID"'"]}], "ImageId": "ami-09eb231ad55c3963d", "InstanceType": "t2.micro", "UserData": "'"$USER_DATA_B64"'"}' \
     --region us-east-1 \
-    --query LaunchTemplateId --output text)
+    --query 'LaunchTemplate.LaunchTemplateId' --output text)
 
 aws autoscaling create-auto-scaling-group \
     --auto-scaling-group-name my-asg \
-    --launch-template LaunchTemplateId "$LAUNCH_TEMPLATE_ID" \
-    --target-group-arns $TG_ARN \
+    --launch-template LaunchTemplateId="$LAUNCH_TEMPLATE_ID",Version='$Latest' \
+    --target-group-arns "$TG_ARN" \
     --health-check-type ELB --health-check-grace-period 600 \
     --min-size 1 --max-size 2 \
-    --vpc-zone-identifier "$PRIVATE_1A,$PRIVATE_2B" 
+    --vpc-zone-identifier "$PRIVATE_1A,$PRIVATE_2B" \
+    --region us-east-1
+
+ALB_PARTS=$(echo "$ALB_ARN" | sed -n 's/.*loadbalancer\/app\/\(.*\)/\1/p')
+ALB_NAME=$(echo "$ALB_PARTS" | cut -d'/' -f1)
+ALB_ID=$(echo "$ALB_PARTS" | cut -d'/' -f2)
+TG_PARTS=$(echo "$TG_ARN" | sed -n 's/.*targetgroup\/\(.*\)/\1/p')
+TG_NAME=$(echo "$TG_PARTS" | cut -d'/' -f1)
+TG_ID=$(echo "$TG_PARTS" | cut -d'/' -f2)
 
 cat <<EOF > config.json
 {
-  "TargetValue": 50.0,
-  "PredefinedMetricSpecification": 
-    {
-      "PredefinedMetricType": "ALBRequestCountPerTarget"
-    }
+    "PredefinedMetricSpecification": {
+        "PredefinedMetricType": "ALBRequestCountPerTarget",
+        "ResourceLabel": "app/$ALB_NAME/$ALB_ID/targetgroup/$TG_NAME/$TG_ID"
+    },
+    "TargetValue": 100,
+    "DisableScaleIn": false
 }
 EOF
 
