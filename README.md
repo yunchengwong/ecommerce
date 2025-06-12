@@ -186,7 +186,9 @@ ENDPOINT=$(aws rds describe-db-instances \
     --db-instance-identifier database-1 \
     --query 'DBInstances[0].Endpoint.Address' --output text)
 
-sed -i "s/endpoint/$ENDPOINT/g" my-script.txt
+mv ecommerce/my_script.txt .
+
+sed -i "s/endpoint/$ENDPOINT/g" my_script.txt
 ```
 
 ## 4. load balancing
@@ -231,8 +233,6 @@ aws elbv2 create-listener \
 #### 4.2 auto scaling group
 
 ```
-mv ecommerce/my_script.txt .
-
 USER_DATA_B64=$(base64 -w 0 my_script.txt)
 
 LAUNCH_TEMPLATE_ID=$(aws ec2 create-launch-template \
