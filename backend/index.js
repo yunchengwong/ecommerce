@@ -104,15 +104,18 @@ app.get('/api/products', async (req, res) => {
     // Execute the query to fetch all products
     const [rows] = await pool.query('SELECT product_id, product_name, description, price, image_url FROM products ORDER BY product_id ASC');
 
-    const data = {
+    const products = rows.map(row => ({
+      ...row,
+      price: parseFloat(row.price)
+    }));
+    
+    res.json({
       message: 'Products fetched successfully from AWS RDS!',
       timestamp: new Date().toISOString(),
       source: 'AWS RDS MySQL',
       version: '1.0',
-      products: rows
-    };
-    console.log(`[Backend] Products requested from frontend. Sending: ${JSON.stringify(data)}`);
-    res.json(data);
+      products
+    });
   } catch (error) {
     console.error('Error fetching products from database:', error.stack);
     res.status(500).json({ message: 'Error fetching products', error: error.message });
