@@ -153,6 +153,7 @@ TG_ARN=$(aws elbv2 create-target-group \
     --protocol HTTP \
     --port 80 \
     --target-type instance \
+    --health-check-timeout-seconds 20 \
     --vpc-id "$VPC_ID" \
     --query 'TargetGroups[0].TargetGroupArn' --output text)
 
@@ -198,7 +199,7 @@ aws autoscaling create-auto-scaling-group \
     --launch-template LaunchTemplateId="$LAUNCH_TEMPLATE_ID",Version='$Latest' \
     --target-group-arns "$TG_ARN" \
     --health-check-type ELB --health-check-grace-period 600 \
-    --min-size 2 --max-size 4 \
+    --min-size 1 --max-size 2 \
     --vpc-zone-identifier "$PRIVATE_1A,$PRIVATE_2B" \
     --region us-east-1
 
@@ -215,13 +216,13 @@ cat <<EOF > config.json
         "PredefinedMetricType": "ALBRequestCountPerTarget",
         "ResourceLabel": "app/$ALB_NAME/$ALB_ID/targetgroup/$TG_NAME/$TG_ID"
     },
-    "TargetValue": 100,
+    "TargetValue": 10,
     "DisableScaleIn": false
 }
 EOF
 
 aws autoscaling put-scaling-policy \
-    --policy-name alb50-target-tracking-scaling-policy  \
+    --policy-name alb10-target-tracking-scaling-policy  \
     --auto-scaling-group-name my-asg \
     --policy-type TargetTrackingScaling \
     --target-tracking-configuration file://config.json
